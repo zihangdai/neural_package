@@ -147,6 +147,13 @@ class Module(object):
         else:
             return [p for p in self.parameters(set(memo))]
 
+    def get_paramsize(self):
+        total_size = 0
+        for p in self.parameters():
+            total_size += p.size.eval()
+
+        return total_size
+
     #### States management (anologous to those for parameters)
     def states(self, memo=None):
         """Returns an iterator over module states that are
