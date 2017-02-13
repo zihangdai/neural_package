@@ -6,3 +6,4 @@ from .linear import *
 from .noise import *
 from .normalization import *
 from .sparse import *
+from .cost import *

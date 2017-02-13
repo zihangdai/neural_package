@@ -34,7 +34,7 @@ class Convolutional(Module):
     def forward(self, input):
         output = dnn_conv(input, self.weight,
                           subsample=self.stride,
-                          padding=self.padding)
+                          border_mode=self.padding)
 
         if self.use_bias:
             output += self.bias.dimshuffle('x', 0, 'x', 'x')
@@ -42,7 +42,7 @@ class Convolutional(Module):
         return output
 
     def __repr__(self):
-        s = ('{name} ({num_filters} -> {num_channels}, filter_size={filter_size}'
+        s = ('{name} ({num_channels} -> {num_filters}, filter_size={filter_size}'
              ', stride={stride}')
         if self.padding != (0,) * len(self.padding):
             s += ', padding={padding}'
@@ -72,9 +72,9 @@ class Deconvolutional(Module):
         # This is the shape of the corresponding convolutional kernel
         self.add_parameter('weight', weight, (num_filters, num_channels) + filter_size)
 
-        if use_bias:
+        if self.use_bias:
             bias = kwargs.get('bias', lasagne.init.Constant(0.))
-            self.add_parameter('bias', bias, (num_filters))
+            self.add_parameter('bias', bias, (num_channels))
 
     def forward(self, input):
         """Only works for same padding!"""
@@ -85,12 +85,12 @@ class Deconvolutional(Module):
             # new theano GPU backend.
             alloc = gpu_alloc_empty(None, theano.config.floatX)
             out = alloc(img.shape[0], kerns.shape[1], img.shape[2]*self.stride[0], img.shape[3]*self.stride[1])
-            desc = GpuDnnConvDesc(padding=self.padding, subsample=self.stride,
+            desc = GpuDnnConvDesc(border_mode=self.padding, subsample=self.stride,
                                   conv_mode='conv')(out.shape)
         else:
             # old theano GPU backend
             out = gpu_alloc_empty(img.shape[0], kerns.shape[1], img.shape[2]*self.stride[0], img.shape[3]*self.stride[1])
-            desc = GpuDnnConvDesc(padding=self.padding, subsample=self.stride,
+            desc = GpuDnnConvDesc(border_mode=self.padding, subsample=self.stride,
                                   conv_mode='conv')(out.shape, kerns.shape)
         output = GpuDnnConvGradI()(kerns, img, out, desc)
 
@@ -100,7 +100,7 @@ class Deconvolutional(Module):
         return output
 
     def __repr__(self):
-        s = ('{name} ({num_filters} <- {num_channels}, filter_size={filter_size}'
+        s = ('{name} ({num_channels} <- {num_filters}, filter_size={filter_size}'
              ', stride={stride}')
         if self.padding != (0,) * len(self.padding):
             s += ', padding={padding}'
