@@ -1,11 +1,12 @@
 from random import shuffle
 import collections
 
-class BucketLoader(object):
-    def __init__(self, dataset, batch_size, process_func=None, pack_func=None, 
-                 sort_func=None, cache_size=None):
+class BucketIterator(object):
+    def __init__(self, dataset, batch_size, cache_size=None, shuffle=False, 
+                 process_func=None, sort_func=None, pack_func=None):
         self.dataset      = dataset
         self.batch_size   = batch_size
+        self.shuffle      = shuffle
         self.cache_size   = cache_size if cache_size else self.batch_size * 20
         self.process_func = process_func
         self.sort_func    = sort_func
@@ -13,7 +14,7 @@ class BucketLoader(object):
 
     def reset(self):
         self.end_of_epoch = False
-        self.dataset.reset()
+        self.dataset.reset(self.shuffle)
 
     def __iter__(self):
         # reset states
@@ -23,7 +24,7 @@ class BucketLoader(object):
             # caching
             cache = []
             for idx in range(self.cache_size):
-                record = self.dataset.next()
+                record = self.dataset.next_record()
                 if record is None:
                     self.end_of_epoch = True
                     break
@@ -32,7 +33,7 @@ class BucketLoader(object):
                 cache.append(record)
 
             # sorting
-            if self.sort_func is not None:
+            if self.shuffle and self.sort_func is not None:
                 cache = sorted(cache, key = self.sort_func)
             
             # packing
@@ -44,7 +45,8 @@ class BucketLoader(object):
                 if self.pack_func is not None:
                     batch = self.pack_func(batch)
                 batches.append(batch)
-            shuffle(batches)
+            if self.shuffle:
+                shuffle(batches)
 
             # generate batch
             for batch in batches:
