@@ -28,6 +28,9 @@ class Dropout(Module):
 
         return self.output
 
+    def infer(self, input):
+        return input
+
 class ReparamDiagGaussian(Module):
     def __init__(self, **kwargs):
         super(ReparamDiagGaussian, self).__init__(**kwargs)

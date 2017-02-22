@@ -51,3 +51,8 @@ class Sequential(Module):
         for module in self._modules.values():
             input = module.forward(input)
         return input
+
+    def infer(self, input):
+        for module in self._modules.values():
+            input = module.infer(input)
+        return input

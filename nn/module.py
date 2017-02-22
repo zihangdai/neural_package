@@ -37,6 +37,10 @@ class Module(object):
     def forward(self, input):
         raise NotImplementedError
 
+    #### By defauly, infer function will just call the forward function
+    def infer(self, input):
+        return self.forward(input)
+
     #### Add parameter, state or module to the Module
     def init_shared_variable(self, tensor, shape, name=None):
         # Pass in a callable function which uses the shape to return np.ndarray
@@ -191,8 +195,9 @@ class Module(object):
 
     #### Recursive apply some function to all self.modules
     def apply(self, fn):
-        for module in self.modules():
+        for module in self.children():
             module.apply(fn)
+        fn(self)
         return self
 
     #### Overwrite __(get|set|del)attr__ functions to enable acess
