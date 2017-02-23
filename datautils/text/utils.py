@@ -1,6 +1,4 @@
 import numpy
-import operator
-import os
 
 def tuplize_share(func, batch=False):
     def tuplize_share_core(record):
@@ -31,14 +29,20 @@ def binarize(vocab, func):
 
     return binarize_core
 
-def pack_binary(padidx, create_mask=True, floatX='float32'):
+def pack_binary(padidx, create_mask=False, reverse_seq=False, align_right=False, floatX='float32'):
     def pack_binary_core(batch):
         maxlen = max(map(len, batch))
         data = numpy.zeros((maxlen, len(batch)), dtype='int64')
+        data.fill(padidx)
         for idx in xrange(len(batch)):
-            record = batch[idx]
-            data[:len(record), idx] = record
-            data[len(record):, idx] = padidx
+            if reverse_seq:
+                record = list(reversed(batch[idx]))
+            else:
+                record = batch[idx]
+            if align_right:
+                data[-len(record):, idx] = record
+            else:
+                data[:len(record), idx] = record
 
         if create_mask:
             mask = numpy.not_equal(data, padidx).astype(floatX)
@@ -48,14 +52,20 @@ def pack_binary(padidx, create_mask=True, floatX='float32'):
         
     return pack_binary_core
 
-def pack_string(vocab, create_mask=True, floatX='float32'):
+def pack_string(vocab, create_mask=False, reverse_seq=False, align_right=False, floatX='float32'):
     def pack_string_core(batch):
         maxlen = max(map(len, batch))
         data = numpy.zeros((maxlen, len(batch)), dtype='int64')
+        data.fill(vocab.pad)
         for idx in xrange(len(batch)):
-            record = batch[idx]
-            data[:len(record), idx] = map(vocab.encode, record)
-            data[len(record):, idx] = vocab.pad
+            if reverse_seq:
+                record = map(vocab.encode, reversed(batch[idx]))
+            else:
+                record = map(vocab.encode, batch[idx])
+            if align_right:
+                data[-len(record):, idx] = record
+            else:
+                data[:len(record), idx] = record
 
         if create_mask:
             mask = numpy.not_equal(data, padidx).astype(floatX)

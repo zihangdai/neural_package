@@ -55,6 +55,11 @@ class Module(object):
             assert np.all(shape == tensor.shape.eval()), \
                 'provided theano shared tensor shape does not match expected shape'
             return tensor
+        elif isinstance(tensor, theano.gpuarray.GpuArraySharedVariable):
+            assert np.all(shape == tensor.shape.eval()), \
+                'provided GpuArraySharedVariable shape does not match expected shape'
+            print 'here'
+            return tensor
         # Pass in NpzFile
         elif isinstance(tensor, np.lib.npyio.NpzFile):
             assert name in tensor, '%s is not in the archive'
